@@ -24,7 +24,7 @@ export default function ControlPanel() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `weightless-echoes-${Date.now()}.png`;
+      link.download = `weightless-${Date.now()}.png`;
       link.click();
       URL.revokeObjectURL(url);
     } finally {

@@ -17,7 +17,7 @@ export type PlaybackState = {
   duration: number;
 };
 
-const SOURCE = asset('audio/weightless-echoes.mp3');
+const SOURCE = asset('audio/weightless.mp3');
 const FFT_SIZE = 2048;
 
 // Pasma w hercach. Utwór jest mocno niskotonowy, więc progi są osobne dla każdego.

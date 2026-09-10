@@ -1,4 +1,4 @@
-# Weightless Echoes — obraz generowany z utworu
+# Weightless — obraz generowany z utworu
 
 Strona jest odtwarzaczem, a obraz robi się z dźwięku. Nie ma tu przewijania ani rozdziałów:
 klikasz play i patrzysz, jak utwór rysuje sam siebie. Na dole leży prawdziwa waveforma
