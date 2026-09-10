@@ -1,46 +1,70 @@
-# SZUM
+# Weightless Echoes — obraz generowany z utworu
 
-One-page generatywny kawałek wizualny. Pięć rozdziałów przewijania, jeden pełnoekranowy
-shader WebGL2. Obraz zmienia się razem ze scrollem, a panel w prawym dolnym rogu pozwala
-grzebać w parametrach i zapisać klatkę jako PNG.
+Strona jest odtwarzaczem, a obraz robi się z dźwięku. Nie ma tu przewijania ani rozdziałów:
+klikasz play i patrzysz, jak utwór rysuje sam siebie. Na dole leży prawdziwa waveforma
+całego nagrania — klikasz w dowolnym miejscu i przeskakujesz, a obraz skacze razem z Tobą.
 
 **Na żywo:** https://megabomb420.github.io/szum/
 
-## Rozdziały
+## Co steruje obrazem
 
-| Postęp | Rozdział | Co robi obraz |
+Obraz nie odgrywa wymyślonych nastrojów — karmi się tym, co faktycznie leci:
+
+| Sygnał | Skąd | Co robi |
 | --- | --- | --- |
-| 0.00–0.20 | SZUM | ziarno ciągnięte poziomo, monochromatyczne, bez kierunku |
-| 0.20–0.45 | FALA | pole dostaje kierunek, domain warping, wchodzi kolor |
-| 0.45–0.70 | STRUKTURA | pole tarasowane w warstwy, krystalizacja |
-| 0.70–0.90 | ZAĆMIENIE | filamenty, mocna winieta, kolor gaśnie |
-| 0.90–1.00 | CISZA | spłaszczenie i spokojny gradient |
+| poziom | RMS z przebiegu czasowego | jasność i ekspozycja kadru |
+| 30–250 Hz | AnalyserNode | masa i tarasowanie warstw |
+| 250 Hz–2k | AnalyserNode | zawirowanie pola |
+| 2k–16k | AnalyserNode | ziarno i filamenty |
+| środek widma | ważona średnia częstotliwości | pozycja w palecie |
+| atak | dodatnia pochodna poziomu | rozbłysk krawędzi warstw |
+| pozycja w utworze | `currentTime / duration` | łuk przez cały kawałek |
+
+Wszystkie liczby widać na żywo w prawym dolnym rogu — to nie dekoracja, tylko odczyt
+z analizatora. Można je porównać z tym, co słychać.
+
+## Ten konkretny utwór
+
+Liczby są zmierzone offline, nie założone — plik został zdekodowany, a widmo policzone
+ramka po ramce:
+
+- **3:18**, 48 kHz, stereo, MP3 64 kbps
+- RMS między ok. **-22 dB i -9 dB** — zakres, pod który dobrana jest normalizacja poziomu
+- mocno niskotonowy: pasmo 30–250 Hz ma średnią **105.7** przy **12.5** dla 2k–16k
+- środek widma średnio **2093 Hz**, ale od 550 Hz w intro do ~4500 Hz w dalszej części
+- granice zmiany tekstury w **31.6 s, 62 s, 91.5 s, 128.8 s, 149.4 s, 170 s**
+  (zaznaczone cienkimi kreskami na waveformie)
+
+To jest utwór ciągły, bez zwrotkowo-refrenowej struktury. Dlatego obraz płynie, a nie ciął
+się na sekcje.
 
 ## Stack
 
-- **Astro 7** (`output: "static"`) — statyczny HTML, JS doładowywany dopiero gdy trzeba
-- **`@astrojs/react`** + React 19 — tylko jedna wyspa, panel sterowania (`client:idle`)
-- **WebGL2 bez three.js** — jeden pełnoekranowy trójkąt generowany z `gl_VertexID`
-  i jeden fragment shader. Zero zależności graficznych.
+- **Astro 7** (`output: "static"`), **React 19** przez `@astrojs/react`
+- **WebGL2 bez three.js** — pełnoekranowy trójkąt z `gl_VertexID` i jeden fragment shader
+- **Web Audio API** — `MediaElementSource` → `AnalyserNode` → `destination`
 - TypeScript w trybie strict
 
 ## Struktura
 
 ```
 src/
-├── pages/index.astro          # składa scenę, rozdziały i wyspę
+├── pages/index.astro
 ├── layouts/Base.astro
 ├── components/
 │   ├── Stage.astro            # <canvas> + bootstrap WebGL
-│   ├── Chapter.astro
-│   └── ControlPanel.tsx       # suwaki, palety, eksport PNG
+│   ├── Transport.tsx          # play, zegar, odczyt danych
+│   ├── Waveform.tsx           # pasek z prawdziwych szczytów nagrania
+│   └── ControlPanel.tsx       # paleta, czułość, kontrast, zrzut klatki
 ├── shaders/stage.frag.glsl    # cały obraz
 ├── lib/
-│   ├── gl.ts                  # kontekst, kompilacja, pełnoekranowy trójkąt
+│   ├── audio.ts               # graf audio i cechy dźwięku
 │   ├── loop.ts                # pętla rAF, uniformy, DPR, adaptacyjna jakość
-│   ├── scroll.ts              # postęp scrolla
-│   ├── controls.ts            # mini-store dla wyspy
-│   └── bridge.ts              # dostęp wyspy do sceny (eksport PNG)
+│   ├── gl.ts                  # kontekst, kompilacja, pełnoekranowy trójkąt
+│   ├── controls.ts            # parametry obrazu
+│   ├── track.ts               # dane waveformy i granic
+│   └── bridge.ts              # dostęp wyspy do sceny (zrzut klatki)
+├── data/track.json            # 700 słupków min/max + granice sekcji (8.9 KB)
 └── styles/global.css
 ```
 
@@ -56,13 +80,19 @@ npm run check      # TypeScript + diagnostyka Astro
 
 ## Uwagi techniczne
 
-- **`base: "/szum"`** w `astro.config.mjs`, bo strona żyje w podkatalogu na GitHub Pages.
-  Ścieżki do assetów muszą to uwzględniać.
+- **`base: "/szum"`**, bo strona żyje w podkatalogu GitHub Pages. `import.meta.env.BASE_URL`
+  nie ma w tym wypadku końcowego ukośnika — od sklejania ścieżek jest `src/lib/base.ts`.
 - **`public/.nojekyll`** — Astro buduje assety do `_astro/`, a Jekyll domyślnie pomija
   katalogi zaczynające się od podkreślnika.
-- **Eksport PNG** działa bez `preserveDrawingBuffer: true`: `capture()` renderuje klatkę
-  i woła `canvas.toBlob` w tym samym zadaniu, więc bufor nie zdąży zostać wyczyszczony.
-- **Adaptacyjna jakość** — przy średniej klatce powyżej 22 ms shader schodzi z 5 oktaw
-  fbm na 4, potem na 3. Na zintegrowanej grafice to warunek płynności.
+- **Kalibracja pasm jest samo-dostrajająca**: każde pasmo trzyma własny, powoli opadający
+  poziom odniesienia, więc wskaźniki nie są przywiązane do jednego utworu na sztywno.
+- **Normalizacja poziomu jest dobrana pod ten utwór** — jego RMS siedzi między ok. -22 dB
+  i -9 dB, więc szersze okno przypinało wskaźnik na maksimum i gubiło całą dynamikę.
+  Przy podmianie nagrania to pierwsze miejsce do poprawy: `src/lib/audio.ts`, linia
+  z `clamp01((levelDb + 26) / 18)`.
+- **AudioContext powstaje dopiero przy pierwszym kliknięciu** — przeglądarki nie pozwalają
+  inaczej, a przy okazji strona nie ładuje 4.8 MB, dopóki ktoś nie zechce posłuchać.
+- **Zrzut klatki** działa bez `preserveDrawingBuffer`: `capture()` renderuje klatkę i woła
+  `canvas.toBlob` w tym samym zadaniu.
 - **Bez WebGL2** zostaje tło z CSS, a `document.documentElement.dataset.stage` przyjmuje
   wartość `fallback`.

@@ -24,7 +24,7 @@ export default function ControlPanel() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `szum-${Date.now()}.png`;
+      link.download = `weightless-echoes-${Date.now()}.png`;
       link.click();
       URL.revokeObjectURL(url);
     } finally {
@@ -53,18 +53,18 @@ export default function ControlPanel() {
           </div>
 
           <div className="panel__field">
-            <label className="panel__label" htmlFor="ctrl-speed">
-              <span>Tempo</span>
-              <span>{controls.speed.toFixed(2)}</span>
+            <label className="panel__label" htmlFor="ctrl-sensitivity">
+              <span>Czułość na dźwięk</span>
+              <span>{controls.sensitivity.toFixed(2)}</span>
             </label>
             <input
-              id="ctrl-speed"
+              id="ctrl-sensitivity"
               type="range"
-              min="0"
+              min="0.2"
               max="2.5"
               step="0.01"
-              value={controls.speed}
-              onChange={(event) => setControls({ speed: Number(event.target.value) })}
+              value={controls.sensitivity}
+              onChange={(event) => setControls({ sensitivity: Number(event.target.value) })}
             />
           </div>
 
@@ -108,7 +108,7 @@ export default function ControlPanel() {
               Reset
             </button>
             <button type="button" className="panel__action" onClick={onExport} disabled={saving}>
-              {saving ? 'Zapisuję' : 'Zapisz PNG'}
+              {saving ? 'Zapisuję' : 'Zapisz klatkę'}
             </button>
           </div>
         </div>
@@ -121,7 +121,7 @@ export default function ControlPanel() {
         onClick={() => setOpen((value) => !value)}
       >
         <span className="panel__dot" aria-hidden="true" />
-        {open ? 'Zamknij' : 'Sterowanie'}
+        {open ? 'Zamknij' : 'Obraz'}
       </button>
     </div>
   );

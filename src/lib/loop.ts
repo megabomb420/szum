@@ -1,6 +1,6 @@
+import { drift, isPlaying, read as readAudio } from './audio';
 import { createContext, createProgram, drawFullscreen } from './gl';
 import { getControls, subscribeControls, type Controls } from './controls';
-import { prefersReducedMotion, readTargetProgress, reflectProgress } from './scroll';
 import vertexSource from '../shaders/stage.vert.glsl?raw';
 import fragmentSource from '../shaders/stage.frag.glsl?raw';
 
@@ -33,16 +33,21 @@ export function mountStage(canvas: HTMLCanvasElement): Stage | null {
   const uniforms = {
     res: gl.getUniformLocation(program, 'uRes'),
     time: gl.getUniformLocation(program, 'uTime'),
-    progress: gl.getUniformLocation(program, 'uProgress'),
+    drift: gl.getUniformLocation(program, 'uDrift'),
     pointer: gl.getUniformLocation(program, 'uPointer'),
     quality: gl.getUniformLocation(program, 'uQuality'),
     scale: gl.getUniformLocation(program, 'uScale'),
-    speed: gl.getUniformLocation(program, 'uSpeed'),
     contrast: gl.getUniformLocation(program, 'uContrast'),
     palette: gl.getUniformLocation(program, 'uPalette'),
+    level: gl.getUniformLocation(program, 'uLevel'),
+    low: gl.getUniformLocation(program, 'uLow'),
+    mid: gl.getUniformLocation(program, 'uMid'),
+    high: gl.getUniformLocation(program, 'uHigh'),
+    centroid: gl.getUniformLocation(program, 'uCentroid'),
+    onset: gl.getUniformLocation(program, 'uOnset'),
+    playing: gl.getUniformLocation(program, 'uPlaying'),
   };
 
-  const reduced = prefersReducedMotion();
   const narrow = window.matchMedia('(max-width: 720px)').matches;
   const dprCap = narrow ? 1.5 : 2;
 
@@ -76,8 +81,6 @@ export function mountStage(canvas: HTMLCanvasElement): Stage | null {
   let sampledFrames = 0;
   let stableChecks = 0;
   let elapsed = 0;
-  let progress = readTargetProgress();
-  let reflected = -1;
   let last = performance.now();
   let rafId = 0;
   let disposed = false;
@@ -93,16 +96,26 @@ export function mountStage(canvas: HTMLCanvasElement): Stage | null {
   }
 
   function render() {
+    const audio = readAudio();
+    const gain = controls.sensitivity;
+    const lift = (value: number) => Math.min(1, value * gain);
+
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.uniform2f(uniforms.res, canvas.width, canvas.height);
     gl.uniform1f(uniforms.time, elapsed);
-    gl.uniform1f(uniforms.progress, progress);
+    gl.uniform1f(uniforms.drift, drift());
     gl.uniform2f(uniforms.pointer, pointer.x, pointer.y);
     gl.uniform1f(uniforms.quality, quality);
     gl.uniform1f(uniforms.scale, controls.scale);
-    gl.uniform1f(uniforms.speed, controls.speed);
     gl.uniform1f(uniforms.contrast, controls.contrast);
     gl.uniform1i(uniforms.palette, controls.palette);
+    gl.uniform1f(uniforms.level, lift(audio.level));
+    gl.uniform1f(uniforms.low, lift(audio.low));
+    gl.uniform1f(uniforms.mid, lift(audio.mid));
+    gl.uniform1f(uniforms.high, lift(audio.high));
+    gl.uniform1f(uniforms.centroid, lift(audio.centroid));
+    gl.uniform1f(uniforms.onset, lift(audio.onset));
+    gl.uniform1f(uniforms.playing, isPlaying() ? 1 : 0);
     drawFullscreen(gl);
   }
 
@@ -117,15 +130,11 @@ export function mountStage(canvas: HTMLCanvasElement): Stage | null {
 
     resize();
 
-    const target = readTargetProgress();
-    progress += (target - progress) * (reduced ? 1 : 0.09);
-    if (Math.abs(target - progress) < 0.0004) progress = target;
-
-    const ease = reduced ? 1 : 0.06;
+    const ease = 0.06;
     pointer.x += (pointer.targetX - pointer.x) * ease;
     pointer.y += (pointer.targetY - pointer.y) * ease;
 
-    if (!reduced) elapsed += delta / 1000;
+    elapsed += delta / 1000;
 
     frameEma = frameEma * 0.9 + delta * 0.1;
     sampledFrames += 1;
@@ -146,11 +155,6 @@ export function mountStage(canvas: HTMLCanvasElement): Stage | null {
     }
 
     render();
-
-    if (Math.abs(progress - reflected) > 0.0008) {
-      reflected = progress;
-      reflectProgress(progress);
-    }
   }
 
   rafId = requestAnimationFrame(frame);

@@ -1,6 +1,6 @@
 export type Controls = {
   scale: number;
-  speed: number;
+  sensitivity: number;
   contrast: number;
   palette: number;
 };
@@ -13,7 +13,7 @@ export const PALETTES = [
 
 const initial: Controls = {
   scale: 1,
-  speed: 1,
+  sensitivity: 1,
   contrast: 0.32,
   palette: 1,
 };

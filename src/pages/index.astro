@@ -1,102 +1,15 @@
 ---
-import Chapter from '../components/Chapter.astro';
 import ControlPanel from '../components/ControlPanel';
 import Stage from '../components/Stage.astro';
+import Transport from '../components/Transport';
 import Base from '../layouts/Base.astro';
-
-const chapters = [
-  {
-    index: '01',
-    title: 'SZUM',
-    lead: 'Punkt wyjścia. Czysty szum — bez kierunku, bez koloru, bez struktury.',
-    hero: true,
-  },
-  {
-    index: '02',
-    title: 'FALA',
-    lead: 'Pole dostaje kierunek. Obraz zaczyna płynąć, a szum po raz pierwszy nabiera barwy.',
-  },
-  {
-    index: '03',
-    title: 'STRUKTURA',
-    lead: 'Przepływ krzepnie w warstwy. To, co płynne, dostaje krawędź i rytm.',
-  },
-  {
-    index: '04',
-    title: 'ZAĆMIENIE',
-    lead: 'Kolor gaśnie, kontrast rośnie. Obraz gęstnieje, aż zostaje samo światło i cień.',
-  },
-  {
-    index: '05',
-    title: 'CISZA',
-    lead: 'Wszystko zwalnia. Zostaje spokojny gradient i oddech.',
-  },
-];
 ---
 
 <Base
-  title="SZUM — generatywny kawałek wizualny"
-  description="Pięć rozdziałów przewijania i jeden shader. Obraz, który zmienia się razem ze scrollem."
+  title="Weightless Echoes — obraz generowany z utworu"
+  description="Poziom, pasma i środek widma utworu sterują obrazem na żywo. Przewiń waveformę, żeby zobaczyć dowolny moment."
 >
   <Stage />
-
-  <header class="top">
-    <span>Szum</span>
-    <span>Shader / WebGL2</span>
-  </header>
-
-  <main>
-    <h1 class="sr-only">SZUM — generatywny kawałek wizualny</h1>
-
-    {chapters.map((chapter) => (
-      <Chapter
-        index={chapter.index}
-        title={chapter.title}
-        lead={chapter.lead}
-        hero={chapter.hero}
-      />
-    ))}
-  </main>
-
-  <nav class="rail" aria-label="Rozdziały">
-    <ul>
-      {chapters.map((chapter) => (
-        <li>{chapter.title}</li>
-      ))}
-    </ul>
-  </nav>
-
-  <footer class="bottom">
-    <span>Przewiń albo rusz kursorem</span>
-    <span>2026</span>
-  </footer>
-
+  <Transport client:load />
   <ControlPanel client:idle />
-
-  <script>
-    const chapters = Array.from(document.querySelectorAll<HTMLElement>('[data-chapter]'));
-    const root = document.documentElement;
-
-    if (chapters.length > 0) {
-      const activate = (index: number) => {
-        chapters.forEach((element, i) => element.classList.toggle('is-active', i === index));
-        root.dataset.activeChapter = String(index);
-      };
-
-      activate(0);
-
-      const observer = new IntersectionObserver(
-        (entries) => {
-          for (const entry of entries) {
-            if (!entry.isIntersecting) continue;
-            const index = chapters.indexOf(entry.target as HTMLElement);
-            if (index >= 0) activate(index);
-          }
-        },
-        { rootMargin: '-50% 0px -50% 0px', threshold: 0 },
-      );
-
-      for (const chapter of chapters) observer.observe(chapter);
-    }
-  </script>
 </Base>
