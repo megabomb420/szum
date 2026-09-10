@@ -1,0 +1,28 @@
+---
+---
+
+<canvas class="stage" data-stage aria-hidden="true"></canvas>
+<div class="scrim" aria-hidden="true"></div>
+
+<script>
+  import { setStage } from '../lib/bridge';
+  import { mountStage } from '../lib/loop';
+
+  const canvas = document.querySelector<HTMLCanvasElement>('[data-stage]');
+
+  if (canvas) {
+    try {
+      const stage = mountStage(canvas);
+      if (stage) {
+        setStage(stage);
+        document.documentElement.dataset.stage = 'webgl';
+        window.addEventListener('pagehide', () => stage.dispose(), { once: true });
+      } else {
+        document.documentElement.dataset.stage = 'fallback';
+      }
+    } catch (error) {
+      document.documentElement.dataset.stage = 'fallback';
+      console.error('[szum] scena WebGL nie wystartowała:', error);
+    }
+  }
+</script>
