@@ -38,6 +38,17 @@ ramka po ramce:
 To jest utwór ciągły, bez zwrotkowo-refrenowej struktury. Dlatego obraz płynie, a nie ciął
 się na sekcje.
 
+## Frazy
+
+W siedmiu miejscach na ekranie wysnuwa się jedno zdanie — po jednym na odcinek utworu.
+Nie pojawiają się losowo: każda fraza należy do odcinka wyznaczonego przez zmierzone
+granice, więc przy każdym odsłuchu wraca dokładnie w to samo miejsce.
+
+Tekst wchodzi **4 sekundy** po zmianie odcinka, zostaje **9 sekund** i rozpływa się przez
+niecałe 2 sekundy. Cała treść siedzi w jednej tablicy — `src/lib/phrases.ts`. Podmiana
+albo dopisanie frazy to edycja tylko tego pliku; stałe `APPEAR_AFTER` i `HOLD_FOR` obok
+sterują czasem.
+
 ## Stack
 
 - **Astro 7** (`output: "static"`), **React 19** przez `@astrojs/react`

@@ -163,6 +163,48 @@ body::before {
   text-transform: none;
 }
 
+/* --- fraza pojawiająca się w utworze -------------------------------- */
+
+.phrase {
+  position: fixed;
+  inset: 16% 0 auto 0;
+  height: 48%;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  padding: 0 var(--pad-x);
+  pointer-events: none;
+  opacity: 0;
+  filter: blur(10px);
+  transform: translateY(0.7rem);
+  transition:
+    opacity 1.9s ease,
+    filter 1.9s ease,
+    transform 1.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.phrase.is-visible {
+  opacity: 1;
+  filter: blur(0);
+  transform: none;
+}
+
+.phrase__text {
+  margin: 0;
+  max-width: 24ch;
+  font-size: clamp(1.45rem, 4.1vw, 3.1rem);
+  font-weight: 300;
+  line-height: 1.18;
+  letter-spacing: 0.005em;
+  text-align: center;
+  text-wrap: balance;
+  color: rgba(255, 255, 255, 0.94);
+  /* Dwie warstwy: ciasna trzyma krawędzie liter, szeroka wygasza jasne tło pod nimi. */
+  text-shadow:
+    0 0.05rem 0.5rem rgba(0, 0, 0, 0.9),
+    0 0.25rem 3rem rgba(0, 0, 0, 0.92);
+}
+
 /* --- dolny pasek ---------------------------------------------------- */
 
 .bar {
@@ -484,6 +526,15 @@ body::before {
     display: none;
   }
 
+  .phrase {
+    inset: 14% 0 auto 0;
+    height: 42%;
+  }
+
+  .phrase__text {
+    max-width: 18ch;
+  }
+
   .readout {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.3rem 1rem;
@@ -517,5 +568,10 @@ body::before {
   .play,
   .meter__track i {
     transition: none;
+  }
+
+  .phrase {
+    filter: none;
+    transform: none;
   }
 }

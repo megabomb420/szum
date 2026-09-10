@@ -10,6 +10,7 @@ import {
   type PlaybackState,
 } from '../lib/audio';
 import { formatTime, track } from '../lib/track';
+import Phrase from './Phrase';
 import Waveform from './Waveform';
 
 const BANDS = [
@@ -63,6 +64,8 @@ export default function Transport() {
 
   return (
     <>
+      <Phrase time={state.currentTime} boundaries={track.boundaries} />
+
       <div className={`overlay${started ? ' is-gone' : ''}`}>
         <div className="overlay__inner">
           <button
